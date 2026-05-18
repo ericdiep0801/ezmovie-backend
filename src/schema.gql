@@ -1,0 +1,272 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input AddFavoriteDto {
+  movieName: String
+  moviePoster: String
+  movieSlug: String!
+  movieType: String
+}
+
+input AddHistoryDto {
+  episodeName: String!
+  episodeSlug: String!
+  movieName: String!
+  moviePoster: String
+  movieSlug: String!
+}
+
+type AuthPayload {
+  access_token: String!
+  user: User!
+}
+
+type AuthResponse {
+  data: AuthPayload
+  message: String!
+  status: Float!
+}
+
+type CategoryItem {
+  id: String
+  name: String!
+  slug: String!
+}
+
+input ChangePasswordDto {
+  newPassword: String!
+  oldPassword: String!
+}
+
+type CommonResponse {
+  message: String!
+  status: Float!
+}
+
+type CountryItem {
+  id: String
+  name: String!
+  slug: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type EpisodeServer {
+  server_data: [EpisodeServerData!]!
+  server_name: String!
+}
+
+type EpisodeServerData {
+  filename: String!
+  link_embed: String!
+  link_m3u8: String!
+  name: String!
+  slug: String!
+}
+
+type Favorite {
+  createdAt: DateTime!
+  id: Int!
+  movieName: String!
+  moviePoster: String
+  movieSlug: String!
+  movieType: String
+  userId: Int!
+}
+
+type FavoriteListResponse {
+  data: [Favorite!]
+  message: String!
+  status: Float!
+}
+
+type FavoriteToggleResponse {
+  isFavorited: Boolean
+  message: String!
+  status: Float!
+}
+
+input ForgotPasswordDto {
+  email: String!
+}
+
+type IMDBInfo {
+  id: String
+  vote_average: Float
+  vote_count: Float
+}
+
+type MovieDetail {
+  _id: String!
+  actor: [String!]
+  category: [CategoryItem!]
+  content: String
+  country: [CountryItem!]
+  director: [String!]
+  episode_current: String
+  episode_total: String
+  lang: String
+  name: String!
+  notify: String
+  origin_name: String!
+  poster_url: String
+  quality: String
+  showtimes: String
+  slug: String!
+  status: String
+  thumb_url: String
+  time: String
+  type: String
+  view: Int
+  year: Float
+}
+
+type MovieDetailData {
+  episodes: [EpisodeServer!]!
+  movie: MovieDetail!
+}
+
+type MovieDetailResponse {
+  data: MovieDetailData
+  message: String!
+  status: Float!
+}
+
+type MovieItem {
+  _id: String!
+  episode_current: String
+  imdb: IMDBInfo
+  lang: String
+  name: String!
+  origin_name: String!
+  poster_url: String
+  quality: String
+  slug: String!
+  thumb_url: String
+  time: String
+  tmdb: TMDBInfo
+  type: String
+  year: Float
+}
+
+type MovieListResponse {
+  items: [MovieItem!]
+  message: String!
+  pagination: PaginationInfo
+  pathImage: String
+  status: Float!
+}
+
+type Mutation {
+  addFavorite(addFavoriteDto: AddFavoriteDto!): CommonResponse!
+  addWatchHistory(addHistoryDto: AddHistoryDto!): CommonResponse!
+  changePassword(changePasswordDto: ChangePasswordDto!): AuthResponse!
+  clearWatchHistory: CommonResponse!
+  forgotPassword(forgotPasswordDto: ForgotPasswordDto!): AuthResponse!
+  removeFavorite(slug: String!): CommonResponse!
+  resendOtp(resendOtpDto: ResendOtpDto!): AuthResponse!
+  resetPassword(resetPasswordDto: ResetPasswordDto!): AuthResponse!
+  signin(signinDto: SigninDto!): AuthResponse!
+  signup(signupDto: SignupDto!): AuthResponse!
+  toggleFavorite(addFavoriteDto: AddFavoriteDto!): FavoriteToggleResponse!
+  verifyOtp(verifyOtpDto: VerifyOtpDto!): AuthResponse!
+}
+
+type PaginationInfo {
+  currentPage: Int!
+  totalItems: Int!
+  totalItemsPerPage: Int!
+  totalPages: Int!
+}
+
+type Query {
+  favorites: FavoriteListResponse!
+  isMovieFavorited(slug: String!): FavoriteToggleResponse!
+  me: UserResponse!
+  movieDetail(slug: String!): MovieDetailResponse!
+  movies(page: Int = 1): MovieListResponse!
+  searchMovies(keyword: String!, limit: Int = 24): MovieListResponse!
+  user(id: Int!): User
+  users: [User!]!
+  watchHistory: WatchHistoryResponse!
+}
+
+input ResendOtpDto {
+  email: String!
+}
+
+input ResetPasswordDto {
+  email: String!
+  newPassword: String!
+  otpCode: String!
+}
+
+input SigninDto {
+  email: String!
+  password: String!
+}
+
+input SignupDto {
+  email: String!
+  password: String!
+  username: String!
+}
+
+type TMDBInfo {
+  id: String
+  season: Float
+  type: String
+  vote_average: Float
+  vote_count: Float
+}
+
+type User {
+  avatar: String
+  createdAt: DateTime!
+  email: String!
+  id: Int!
+  isActive: Boolean!
+  provider: String!
+  role: UserRole!
+  updatedAt: DateTime!
+  username: String!
+}
+
+type UserResponse {
+  data: User
+  message: String
+  status: Float!
+}
+
+enum UserRole {
+  ADMIN
+  USER
+  VIP
+}
+
+input VerifyOtpDto {
+  email: String!
+  otpCode: String!
+}
+
+type WatchHistory {
+  createdAt: DateTime!
+  episodeName: String!
+  episodeSlug: String!
+  id: Int!
+  movieName: String!
+  moviePoster: String
+  movieSlug: String!
+  updatedAt: DateTime!
+  userId: Int!
+}
+
+type WatchHistoryResponse {
+  data: [WatchHistory!]
+  message: String!
+  status: Float!
+}

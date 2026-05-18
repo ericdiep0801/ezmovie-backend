@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package users;
+
+service UsersService {
+  rpc FindOne (UserRequest) returns (UserResponse) {}
+  rpc FindAll (Empty) returns (UsersListResponse) {}
+}
+
+message UserRequest {
+  int32 id = 1;
+}
+
+message UserResponse {
+  int32 id = 1;
+  string username = 2;
+  string email = 3;
+  string role = 4;
+  bool isActive = 5;
+}
+
+message UsersListResponse {
+  repeated UserResponse users = 1;
+}
+
+message Empty {}
