@@ -20,9 +20,12 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
+import { ScheduleModule } from '@nestjs/schedule';
+import { KafkaHeartbeatService } from './common/services/kafka-heartbeat.service';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     MailModule,
     ConfigModule.forRoot({
       isGlobal: true,
@@ -56,7 +59,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, KafkaHeartbeatService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

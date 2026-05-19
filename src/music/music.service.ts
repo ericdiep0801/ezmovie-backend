@@ -21,43 +21,43 @@ export class MusicService {
   /**
    * Dynamically fetch trending V-Pop & Global Hits in real-time from YouTube (no hardcoding!)
    */
-  /**
-   * Dynamically fetch trending V-Pop & Global Hits in real-time from YouTube (no hardcoding!)
-   */
   async getTrendingTracks(): Promise<TrackDto[]> {
     this.logger.log('Dynamically fetching trending music from YouTube (no hardcoding!).');
     
     try {
-      // Scrape hot Vietnamese and Billboard global hits in parallel
-      const [vpopResults1, vpopResults2, globalResults1, globalResults2] = await Promise.all([
-        this.scrapeYouTubeSearch('nhạc trẻ mới nhất hot nhất vpop'),
-        this.scrapeYouTubeSearch('vpop viral hits tik tok hot'),
-        this.scrapeYouTubeSearch('billboard hot 100 pop hits'),
-        this.scrapeYouTubeSearch('lofi chill music playlist')
-      ]);
+      const queries = [
+        'nhạc trẻ mới nhất hot nhất vpop',
+        'vpop viral hits tik tok hot',
+        'billboard hot 100 pop hits',
+        'lofi chill music playlist'
+      ];
       
-      const combined = [...vpopResults1, ...vpopResults2, ...globalResults1, ...globalResults2];
       const seen = new Set<string>();
       const tracks: TrackDto[] = [];
-      
       let index = 0;
-      for (const t of combined) {
-        if (!seen.has(t.previewUrl)) {
-          seen.add(t.previewUrl);
-          
-          // Let's dynamically tag genre
-          if (t.genre === 'YouTube') {
-            t.genre = index % 2 === 0 ? 'V-Pop' : 'Pop';
+      
+      // Fetch sequentially with early exit to preserve RAM under 512MB limit
+      for (const query of queries) {
+        const results = await this.scrapeYouTubeSearch(query);
+        for (const t of results) {
+          if (!seen.has(t.previewUrl)) {
+            seen.add(t.previewUrl);
+            
+            // Let's dynamically tag genre
+            if (t.genre === 'YouTube') {
+              t.genre = index % 2 === 0 ? 'V-Pop' : 'Pop';
+            }
+            t.id = `trending-${index}`;
+            if (index === 4 || index === 9 || index === 15 || index === 22) {
+              t.isLocked = true;
+              t.name = `${t.name} (VIP Exclusive)`;
+              t.previewUrl = ''; // Lock playback
+            }
+            tracks.push(t);
+            index++;
           }
-          t.id = `trending-${index}`;
-          if (index === 4 || index === 9 || index === 15 || index === 22) {
-            t.isLocked = true;
-            t.name = `${t.name} (VIP Exclusive)`;
-            t.previewUrl = ''; // Lock playback
-          }
-          tracks.push(t);
-          index++;
         }
+        if (tracks.length >= 100) break; // Stop early once we reach the 100+ song limit!
       }
       
       if (tracks.length > 0) {
@@ -96,143 +96,102 @@ export class MusicService {
     this.logger.log(`Searching global dynamic catalog for: "${cleanKeyword}"`);
 
     try {
-      // If user selected a genre category sidebar link
+      let queries: string[] = [];
+      let defaultGenre = 'YouTube';
+
       if (cleanKeyword === 'v-pop') {
-        const [r1, r2, r3, r4] = await Promise.all([
-          this.scrapeYouTubeSearch('nhạc trẻ hot nhất hiện nay vpop'),
-          this.scrapeYouTubeSearch('vpop hot hits acoustic chill'),
-          this.scrapeYouTubeSearch('vpop remix tik tok hot'),
-          this.scrapeYouTubeSearch('nhạc trẻ mới phát hành')
-        ]);
-        const combined = [...r1, ...r2, ...r3, ...r4];
-        const seen = new Set<string>();
-        const results: TrackDto[] = [];
-        let index = 0;
-        for (const t of combined) {
-          if (!seen.has(t.previewUrl)) {
-            seen.add(t.previewUrl);
-            t.genre = 'V-Pop';
-            t.id = `vpop-${index}`;
-            if (index === 4 || index === 9 || index === 15) { t.isLocked = true; t.name += ' (VIP Exclusive)'; t.previewUrl = ''; }
-            results.push(t);
-            index++;
-          }
-        }
-        return results;
-      }
-      if (cleanKeyword === 'pop') {
-        const [r1, r2, r3, r4] = await Promise.all([
-          this.scrapeYouTubeSearch('pop music hits billboard taylor swift'),
-          this.scrapeYouTubeSearch('global top pop hits playlist'),
-          this.scrapeYouTubeSearch('pop billboard hot 100'),
-          this.scrapeYouTubeSearch('new pop releases english')
-        ]);
-        const combined = [...r1, ...r2, ...r3, ...r4];
-        const seen = new Set<string>();
-        const results: TrackDto[] = [];
-        let index = 0;
-        for (const t of combined) {
-          if (!seen.has(t.previewUrl)) {
-            seen.add(t.previewUrl);
-            t.genre = 'Pop';
-            t.id = `pop-${index}`;
-            if (index === 2 || index === 12) { t.isLocked = true; t.name += ' (Restricted)'; t.previewUrl = ''; }
-            results.push(t);
-            index++;
-          }
-        }
-        return results;
-      }
-      if (cleanKeyword === 'edm') {
-        const [r1, r2, r3, r4] = await Promise.all([
-          this.scrapeYouTubeSearch('best edm music festival hits electro'),
-          this.scrapeYouTubeSearch('ultra edm dance party hits'),
-          this.scrapeYouTubeSearch('gaming edm ncs hits'),
-          this.scrapeYouTubeSearch('slap house edm viral')
-        ]);
-        const combined = [...r1, ...r2, ...r3, ...r4];
-        const seen = new Set<string>();
-        const results: TrackDto[] = [];
-        let index = 0;
-        for (const t of combined) {
-          if (!seen.has(t.previewUrl)) {
-            seen.add(t.previewUrl);
-            t.genre = 'EDM';
-            t.id = `edm-${index}`;
-            if (index === 3 || index === 14) { t.isLocked = true; t.name += ' (VIP Only)'; t.previewUrl = ''; }
-            results.push(t);
-            index++;
-          }
-        }
-        return results;
-      }
-      if (cleanKeyword === 'rock') {
-        const [r1, r2, r3, r4] = await Promise.all([
-          this.scrapeYouTubeSearch('rock classics hits bands live'),
-          this.scrapeYouTubeSearch('alternative rock grunge hits'),
-          this.scrapeYouTubeSearch('heavy metal rock legends'),
-          this.scrapeYouTubeSearch('acoustic rock covers playlist')
-        ]);
-        const combined = [...r1, ...r2, ...r3, ...r4];
-        const seen = new Set<string>();
-        const results: TrackDto[] = [];
-        let index = 0;
-        for (const t of combined) {
-          if (!seen.has(t.previewUrl)) {
-            seen.add(t.previewUrl);
-            t.genre = 'Rock';
-            t.id = `rock-${index}`;
-            if (index === 5 || index === 16) { t.isLocked = true; t.name += ' (VIP Only)'; t.previewUrl = ''; }
-            results.push(t);
-            index++;
-          }
-        }
-        return results;
-      }
-      if (cleanKeyword === 'acoustic') {
-        const [r1, r2, r3, r4] = await Promise.all([
-          this.scrapeYouTubeSearch('acoustic pop cover love songs'),
-          this.scrapeYouTubeSearch('acoustic guitar chill covers'),
-          this.scrapeYouTubeSearch('indie folk acoustic playlist'),
-          this.scrapeYouTubeSearch('vpop acoustic cover chill')
-        ]);
-        const combined = [...r1, ...r2, ...r3, ...r4];
-        const seen = new Set<string>();
-        const results: TrackDto[] = [];
-        let index = 0;
-        for (const t of combined) {
-          if (!seen.has(t.previewUrl)) {
-            seen.add(t.previewUrl);
-            t.genre = 'Acoustic';
-            t.id = `acoustic-${index}`;
-            if (index === 1 || index === 11) { t.isLocked = true; t.name += ' (Restricted)'; t.previewUrl = ''; }
-            results.push(t);
-            index++;
-          }
-        }
-        return results;
+        queries = [
+          'nhạc trẻ hot nhất hiện nay vpop',
+          'vpop hot hits acoustic chill',
+          'vpop remix tik tok hot',
+          'nhạc trẻ mới phát hành'
+        ];
+        defaultGenre = 'V-Pop';
+      } else if (cleanKeyword === 'pop') {
+        queries = [
+          'pop music hits billboard taylor swift',
+          'global top pop hits playlist',
+          'pop billboard hot 100',
+          'new pop releases english'
+        ];
+        defaultGenre = 'Pop';
+      } else if (cleanKeyword === 'edm') {
+        queries = [
+          'best edm music festival hits electro',
+          'ultra edm dance party hits',
+          'gaming edm ncs hits',
+          'slap house edm viral'
+        ];
+        defaultGenre = 'EDM';
+      } else if (cleanKeyword === 'rock') {
+        queries = [
+          'rock classics hits bands live',
+          'alternative rock grunge hits',
+          'heavy metal rock legends',
+          'acoustic rock covers playlist'
+        ];
+        defaultGenre = 'Rock';
+      } else if (cleanKeyword === 'acoustic') {
+        queries = [
+          'acoustic pop cover love songs',
+          'acoustic guitar chill covers',
+          'indie folk acoustic playlist',
+          'vpop acoustic cover chill'
+        ];
+        defaultGenre = 'Acoustic';
+      } else {
+        // Regular search query with variations
+        queries = [
+          cleanKeyword,
+          cleanKeyword + ' official music video',
+          cleanKeyword + ' lyric audio',
+          cleanKeyword + ' live acoustic remix'
+        ];
       }
 
-      // Regular search query with multiple variations in parallel to achieve 100+ songs
-      const [r1, r2, r3, r4] = await Promise.all([
-        this.scrapeYouTubeSearch(cleanKeyword),
-        this.scrapeYouTubeSearch(cleanKeyword + ' official music video'),
-        this.scrapeYouTubeSearch(cleanKeyword + ' lyric audio'),
-        this.scrapeYouTubeSearch(cleanKeyword + ' live acoustic remix')
-      ]);
-      
-      const combined = [...r1, ...r2, ...r3, ...r4];
       const seen = new Set<string>();
       const results: TrackDto[] = [];
       let index = 0;
-      for (const t of combined) {
-        if (!seen.has(t.previewUrl)) {
-          seen.add(t.previewUrl);
-          t.id = `search-${index}`;
-          results.push(t);
-          index++;
+
+      // Sequential batch fetching with early exit to keep memory minimal
+      for (const query of queries) {
+        const batch = await this.scrapeYouTubeSearch(query);
+        for (const t of batch) {
+          if (!seen.has(t.previewUrl)) {
+            seen.add(t.previewUrl);
+            t.genre = defaultGenre !== 'YouTube' ? defaultGenre : t.genre;
+            t.id = `${defaultGenre.toLowerCase()}-${index}`;
+            
+            // Apply beautiful premium mockup licenses
+            if (defaultGenre === 'V-Pop' && (index === 4 || index === 9 || index === 15)) {
+              t.isLocked = true;
+              t.name += ' (VIP Exclusive)';
+              t.previewUrl = '';
+            } else if (defaultGenre === 'Pop' && (index === 2 || index === 12)) {
+              t.isLocked = true;
+              t.name += ' (Restricted)';
+              t.previewUrl = '';
+            } else if (defaultGenre === 'EDM' && (index === 3 || index === 14)) {
+              t.isLocked = true;
+              t.name += ' (VIP Only)';
+              t.previewUrl = '';
+            } else if (defaultGenre === 'Rock' && (index === 5 || index === 16)) {
+              t.isLocked = true;
+              t.name += ' (VIP Only)';
+              t.previewUrl = '';
+            } else if (defaultGenre === 'Acoustic' && (index === 1 || index === 11)) {
+              t.isLocked = true;
+              t.name += ' (Restricted)';
+              t.previewUrl = '';
+            }
+            
+            results.push(t);
+            index++;
+          }
         }
+        if (results.length >= 100) break; // Early stop when >= 100 items gathered to protect container RAM!
       }
+
       return results;
     } catch (e) {
       this.logger.error('Live search scraper failed', e);
@@ -254,7 +213,7 @@ export class MusicService {
         }
       });
       
-      const html = await response.text();
+      let html: string | null = await response.text();
       
       // Look for ytInitialData script block
       const startMarker = 'var ytInitialData = ';
@@ -264,34 +223,44 @@ export class MusicService {
       if (startIndex === -1) {
         const alternativeStart = 'window["ytInitialData"] = ';
         startIndex = html.indexOf(alternativeStart);
-        if (startIndex === -1) return [];
+        if (startIndex === -1) {
+          html = null; // Instantly release memory block!
+          return [];
+        }
         startIndex += alternativeStart.length;
       } else {
         startIndex += startMarker.length;
       }
       
       const endIndex = html.indexOf(endMarker, startIndex);
-      if (endIndex === -1) return [];
+      if (endIndex === -1) {
+        html = null; // Instantly release memory block!
+        return [];
+      }
       
       const jsonStr = html.substring(startIndex, endIndex);
+      html = null; // Clean up large HTML raw buffer from RAM immediately before JSON parsing!
+      
       const data = JSON.parse(jsonStr);
       
       const results: TrackDto[] = [];
       const contents = data.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents?.[0]?.itemSectionRenderer?.contents;
       
-      if (!contents || !Array.isArray(contents)) return [];
+      if (!contents || !Array.isArray(contents)) {
+        return [];
+      }
       
       for (const item of contents) {
         const video = item.videoRenderer;
         if (video && video.videoId) {
           const videoId = video.videoId;
           
-          // Format YouTube title cleanups (remove MV, Official Audio, official, Video, etc.)
+          // Format YouTube title cleanups
           let title = video.title?.runs?.[0]?.text || 'YouTube Song';
-          title = title.replace(/\[.*?\]|\(.*?\)/g, '').trim(); // Remove brackets like [MV], (Official Audio)
+          title = title.replace(/\[.*?\]|\(.*?\)/g, '').trim(); // Remove brackets
           
           let artist = video.ownerText?.runs?.[0]?.text || 'Unknown Artist';
-          artist = artist.replace(/ - Topic|VEVO/gi, '').trim(); // Clean channel names like "TaylorSwiftVEVO" or "SonTung-Topic"
+          artist = artist.replace(/ - Topic|VEVO/gi, '').trim(); // Clean channel names
 
           const coverUrl = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
           const durationText = video.lengthText?.simpleText || '03:30';
@@ -304,7 +273,7 @@ export class MusicService {
             durationMs = (parts[0] * 3600 + parts[1] * 60 + parts[2]) * 1000;
           }
           
-          // Split title to extract artist and track name if formatted like "Artist - Name"
+          // Split title to extract artist and track name
           let trackName = title;
           let trackArtist = artist;
           if (title.includes(' - ')) {

@@ -49,6 +49,7 @@
     "express": "^5.2.1",
     "graphql": "^16.14.0",
     "helmet": "^8.1.0",
+    "kafkajs": "^2.2.4",
     "mysql2": "^3.22.3",
     "nodemailer": "^8.0.7",
     "passport": "^0.7.0",
