@@ -15,6 +15,7 @@ import { TvFavorite } from './tv/domain/entities/tv-favorite.entity';
 import { TvHistory } from './tv/domain/entities/tv-history.entity';
 import { TvModule } from './tv/tv.module';
 import { MailModule } from './modules/mail/mail.module';
+import { MusicModule } from './music/music.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
@@ -47,6 +48,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
     UsersModule,
     MoviesModule,
     TvModule,
+    MusicModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
