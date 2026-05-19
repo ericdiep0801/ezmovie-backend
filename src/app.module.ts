@@ -16,6 +16,7 @@ import { TvHistory } from './tv/domain/entities/tv-history.entity';
 import { TvModule } from './tv/tv.module';
 import { MailModule } from './modules/mail/mail.module';
 import { MusicModule } from './music/music.module';
+import { CartoonModule } from './cartoon/cartoon.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
@@ -52,6 +53,7 @@ import { KafkaHeartbeatService } from './common/services/kafka-heartbeat.service
     MoviesModule,
     TvModule,
     MusicModule,
+    CartoonModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
