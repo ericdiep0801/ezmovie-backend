@@ -224,6 +224,20 @@ type TMDBInfo {
   vote_count: Float
 }
 
+type TvChannel {
+  category: String!
+  createdAt: DateTime!
+  groupTitle: String
+  id: Int!
+  isActive: Boolean!
+  isCustom: Boolean!
+  logo: String
+  name: String!
+  slug: String!
+  streamUrl: String!
+  updatedAt: DateTime!
+}
+
 type User {
   avatar: String
   createdAt: DateTime!

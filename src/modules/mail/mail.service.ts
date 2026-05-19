@@ -8,10 +8,11 @@ export class MailService {
   private transporter: nodemailer.Transporter;
 
   constructor(private readonly configService: ConfigService) {
+    const mailPort = this.configService.get<number>('MAIL_PORT');
     this.transporter = nodemailer.createTransport({
       host: this.configService.get<string>('MAIL_HOST'),
-      port: this.configService.get<number>('MAIL_PORT'),
-      secure: false, // true cho cổng 465, false cho các cổng khác (như 587)
+      port: mailPort,
+      secure: mailPort === 465, // true cho cổng 465, false cho cổng 587
       auth: {
         user: this.configService.get<string>('MAIL_USER'),
         pass: this.configService.get<string>('MAIL_PASS'),

@@ -10,6 +10,10 @@ import { Favorite } from './movies/domain/entities/favorite.entity';
 import { WatchHistory } from './movies/domain/entities/history.entity';
 import { Comment } from './movies/domain/entities/comment.entity';
 import { MoviesModule } from './movies/movies.module';
+import { TvChannel } from './tv/domain/entities/tv-channel.entity';
+import { TvFavorite } from './tv/domain/entities/tv-favorite.entity';
+import { TvHistory } from './tv/domain/entities/tv-history.entity';
+import { TvModule } from './tv/tv.module';
 import { MailModule } from './modules/mail/mail.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -34,7 +38,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [User, Favorite, WatchHistory, Comment],
+        entities: [User, Favorite, WatchHistory, Comment, TvChannel, TvFavorite, TvHistory],
         synchronize: true,
         migrationsRun: true,
       }),
@@ -42,6 +46,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
     AuthModule,
     UsersModule,
     MoviesModule,
+    TvModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
