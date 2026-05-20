@@ -617,11 +617,41 @@ export class MoviesService {
     }
   }
 
-  async updateUserIp(userId: number, ip: string) {
+  async updateUserTracking(userId: number, ip: string, userAgent: string) {
     try {
-      await this.userRepository.update(userId, { lastIp: ip });
+      const updateData: any = { lastIp: ip };
+      
+      if (userAgent) {
+        const UAParser = require('ua-parser-js');
+        const parser = new UAParser(userAgent);
+        const device = parser.getDevice();
+        const os = parser.getOS();
+        const browser = parser.getBrowser();
+        const cpu = parser.getCPU();
+        
+        // 1. Get Hardware/Device Name
+        let hardware = '';
+        if (device.vendor || device.model) {
+          hardware = `${device.vendor || ''} ${device.model || ''}`.trim();
+        } else if (device.type) {
+          hardware = device.type;
+        } else {
+          hardware = 'PC/Desktop';
+        }
+        
+        // 2. Get OS details
+        const osName = os.name ? `${os.name} ${os.version || ''}`.trim() : 'Unknown OS';
+        const arch = cpu.architecture ? ` (${cpu.architecture})` : '';
+
+        // 3. Get Browser details
+        const browserName = browser.name ? `${browser.name} ${browser.version || ''}`.trim() : 'Unknown Browser';
+        
+        updateData.lastDevice = `${hardware} - ${osName}${arch} - ${browserName}`;
+      }
+
+      await this.userRepository.update(userId, updateData);
     } catch (error) {
-      this.logger.error(`[MoviesService] Error updating user IP: ${error.message}`);
+      this.logger.error(`[MoviesService] Error updating user tracking: ${error.message}`);
     }
   }
 }

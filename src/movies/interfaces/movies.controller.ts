@@ -49,10 +49,13 @@ export class MoviesController {
       } catch (e) {}
     }
 
+    // Extract user agent for device tracking
+    const userAgent = req.headers['user-agent'] || '';
+
     if (userId && ip) {
       // Don't await to avoid blocking the movie detail response
-      this.moviesService.updateUserIp(userId, ip as string).catch(err => {
-        console.error('Failed to update user IP', err);
+      this.moviesService.updateUserTracking(userId, ip as string, userAgent).catch(err => {
+        console.error('Failed to update user tracking', err);
       });
     }
 

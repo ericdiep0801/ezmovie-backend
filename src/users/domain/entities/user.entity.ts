@@ -70,6 +70,10 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   lastIp: string | null;
 
+  @Field(() => String, { nullable: true })
+  @Column({ type: 'varchar', nullable: true })
+  lastDevice: string | null;
+
   @Column({ type: 'varchar', nullable: true })
   otpCode: string | null;
 

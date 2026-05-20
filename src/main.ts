@@ -17,6 +17,10 @@ import compression from 'compression';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  // Trust proxy - Required to get real user IP from X-Forwarded-For header
+  // when deployed behind Nginx, Cloudflare, Render, Vercel, etc.
+  app.set('trust proxy', true);
+
   app.use(
     helmet({
       contentSecurityPolicy:
