@@ -12,6 +12,7 @@ export class MoviesService {
   private readonly logger = new Logger(MoviesService.name);
   private readonly BASE_API_URL = 'https://ophim1.com';
   private readonly IMAGE_BASE_URL = 'https://img.ophim.live/uploads/movies';
+  private readonly MAX_WATCH_HISTORY = 30;
 
   constructor(
     @InjectRepository(Favorite)
@@ -368,32 +369,34 @@ export class MoviesService {
   async addWatchHistory(userId: number, dto: AddHistoryDto) {
     this.logger.log(`[MoviesService] Tracking history: ${dto.movieSlug} (ep: ${dto.episodeName}) for user: ${userId}`);
     try {
-      // Find if this movie watch history already exists for the user
-      let history = await this.watchHistoryRepository.findOne({
-        where: { userId, movieSlug: dto.movieSlug },
+      // Duplicate: remove old entry so the movie moves to the top with fresh timestamps
+      await this.watchHistoryRepository.delete({ userId, movieSlug: dto.movieSlug });
+
+      const history = this.watchHistoryRepository.create({
+        userId,
+        movieSlug: dto.movieSlug,
+        movieName: dto.movieName,
+        moviePoster: dto.moviePoster ? this.resolveImageUrl(dto.moviePoster) : undefined,
+        episodeName: dto.episodeName,
+        episodeSlug: dto.episodeSlug,
       });
 
-      if (history) {
-        // Update to the latest watched episode
-        history.episodeName = dto.episodeName;
-        history.episodeSlug = dto.episodeSlug;
-        history.movieName = dto.movieName;
-        if (dto.moviePoster) {
-          history.moviePoster = this.resolveImageUrl(dto.moviePoster);
-        }
-      } else {
-        // Create new history entry
-        history = this.watchHistoryRepository.create({
-          userId,
-          movieSlug: dto.movieSlug,
-          movieName: dto.movieName,
-          moviePoster: dto.moviePoster ? this.resolveImageUrl(dto.moviePoster) : undefined,
-          episodeName: dto.episodeName,
-          episodeSlug: dto.episodeSlug,
+      const saved = await this.watchHistoryRepository.save(history);
+
+      // Cap at MAX_WATCH_HISTORY: drop oldest entries (by updatedAt)
+      const count = await this.watchHistoryRepository.count({ where: { userId } });
+      if (count > this.MAX_WATCH_HISTORY) {
+        const excess = count - this.MAX_WATCH_HISTORY;
+        const oldest = await this.watchHistoryRepository.find({
+          where: { userId },
+          order: { updatedAt: 'ASC' },
+          take: excess,
         });
+        if (oldest.length > 0) {
+          await this.watchHistoryRepository.delete(oldest.map((h) => h.id));
+        }
       }
 
-      const saved = await this.watchHistoryRepository.save(history);
       return {
         status: 200,
         message: 'Watch history updated successfully',
@@ -414,23 +417,14 @@ export class MoviesService {
     try {
       const history = await this.watchHistoryRepository.find({
         where: { userId },
-        order: { updatedAt: 'DESC' }, // Show most recently watched first
+        order: { updatedAt: 'DESC' },
+        take: this.MAX_WATCH_HISTORY,
       });
-
-      // Filter duplicates: keep only the most recent entry for each unique movieSlug
-      const uniqueHistory: any[] = [];
-      const seenSlugs = new Set<string>();
-      for (const item of history) {
-        if (!seenSlugs.has(item.movieSlug)) {
-          seenSlugs.add(item.movieSlug);
-          uniqueHistory.push(item);
-        }
-      }
 
       return {
         status: 200,
         message: 'Get watch history successfully',
-        data: uniqueHistory,
+        data: history,
       };
     } catch (error) {
       this.logger.error(`[MoviesService] Error in listWatchHistory: ${error.message}`);
