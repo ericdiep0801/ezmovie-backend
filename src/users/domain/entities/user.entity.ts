@@ -66,6 +66,10 @@ export class User {
   @Column({ default: false })
   isActive: boolean;
 
+  @Field(() => String, { nullable: true })
+  @Column({ type: 'varchar', nullable: true })
+  lastIp: string | null;
+
   @Column({ type: 'varchar', nullable: true })
   otpCode: string | null;
 

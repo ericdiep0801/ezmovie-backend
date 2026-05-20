@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Favorite } from '../domain/entities/favorite.entity';
 import { WatchHistory } from '../domain/entities/history.entity';
 import { Comment } from '../domain/entities/comment.entity';
+import { User } from '../../users/domain/entities/user.entity';
 import { AddFavoriteDto } from './dto/add-favorite.dto';
 import { AddHistoryDto } from './dto/add-history.dto';
 
@@ -23,6 +24,8 @@ export class MoviesService {
     private readonly watchHistoryRepository: Repository<WatchHistory>,
     @InjectRepository(Comment)
     private readonly commentRepository: Repository<Comment>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   private resolveImageUrl(path: string): string {
@@ -373,7 +376,12 @@ export class MoviesService {
     this.logger.log(`[MoviesService] Tracking history: ${dto.movieSlug} (ep: ${dto.episodeName}) for user: ${userId}`);
     try {
       // Duplicate: remove old entry so the movie moves to the top with fresh timestamps
-      await this.watchHistoryRepository.delete({ userId, movieSlug: dto.movieSlug });
+      const existing = await this.watchHistoryRepository.find({
+        where: { userId, movieSlug: dto.movieSlug }
+      });
+      if (existing && existing.length > 0) {
+        await this.watchHistoryRepository.remove(existing);
+      }
 
       const history = this.watchHistoryRepository.create({
         userId,
@@ -606,6 +614,14 @@ export class MoviesService {
         status: 500,
         message: `Toggle like failed: ${error.message}`,
       };
+    }
+  }
+
+  async updateUserIp(userId: number, ip: string) {
+    try {
+      await this.userRepository.update(userId, { lastIp: ip });
+    } catch (error) {
+      this.logger.error(`[MoviesService] Error updating user IP: ${error.message}`);
     }
   }
 }

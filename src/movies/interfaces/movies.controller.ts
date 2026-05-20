@@ -33,7 +33,29 @@ export class MoviesController {
 
   // 3. Movie details
   @Get('detail/:slug')
-  async getMovieDetails(@Param('slug') slug: string) {
+  async getMovieDetails(@Request() req, @Param('slug') slug: string) {
+    // Extract IP address from request
+    let ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || req.ip;
+    if (Array.isArray(ip)) ip = ip[0];
+
+    // Optionally extract userId from auth token if available to save their last location IP
+    let userId: number | undefined = undefined;
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        userId = payload.userId || payload.sub;
+      } catch (e) {}
+    }
+
+    if (userId && ip) {
+      // Don't await to avoid blocking the movie detail response
+      this.moviesService.updateUserIp(userId, ip as string).catch(err => {
+        console.error('Failed to update user IP', err);
+      });
+    }
+
     return this.moviesService.getMovieDetails(slug);
   }
 
