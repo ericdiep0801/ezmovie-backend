@@ -13,6 +13,8 @@ export class MoviesService {
   private readonly BASE_API_URL = 'https://ophim1.com';
   private readonly IMAGE_BASE_URL = 'https://img.ophim.live/uploads/movies';
   private readonly MAX_WATCH_HISTORY = 30;
+  /** Tránh payload quá lớn / spike RAM khi có nhiều request song song */
+  private readonly MAX_LIST_LIMIT = 100;
 
   constructor(
     @InjectRepository(Favorite)
@@ -33,31 +35,30 @@ export class MoviesService {
 
   // 1. Get all movies (newly updated movies from public server)
   async getMovies(page: number = 1, limit: number = 100) {
-    this.logger.log(`[MoviesService] Fetching movies list for page ${page}, limit ${limit}`);
+    const safeLimit = Math.min(Math.max(1, limit), this.MAX_LIST_LIMIT);
+    const safePage = Math.max(1, page);
+    this.logger.log(`[MoviesService] Fetching movies list for page ${safePage}, limit ${safeLimit}`);
     try {
       const itemsPerPage = 24;
-      const startItemIndex = (page - 1) * limit;
-      const endItemIndex = startItemIndex + limit;
+      const startItemIndex = (safePage - 1) * safeLimit;
+      const endItemIndex = startItemIndex + safeLimit;
       
       const startPageNum = Math.floor(startItemIndex / itemsPerPage) + 1;
       const endPageNum = Math.ceil(endItemIndex / itemsPerPage);
       
-      const fetchPromises: Promise<any>[] = [];
+      const results: any[] = [];
       for (let p = startPageNum; p <= endPageNum; p++) {
-        fetchPromises.push(
-          fetch(`${this.BASE_API_URL}/danh-sach/phim-moi-cap-nhat?page=${p}`)
-            .then(res => {
-              if (!res.ok) throw new Error(`Status ${res.status}`);
-              return res.json();
-            })
-            .catch(err => {
-              this.logger.error(`Failed to fetch public page ${p}: ${err.message}`);
-              return { items: [], pagination: null };
-            })
-        );
+        try {
+          const res = await fetch(`${this.BASE_API_URL}/danh-sach/phim-moi-cap-nhat?page=${p}`);
+          if (!res.ok) {
+            throw new Error(`Status ${res.status}`);
+          }
+          results.push(await res.json());
+        } catch (err: any) {
+          this.logger.error(`Failed to fetch public page ${p}: ${err?.message || err}`);
+          results.push({ items: [], pagination: null });
+        }
       }
-      
-      const results = await Promise.all(fetchPromises);
       
       let allItems: any[] = [];
       let lastPaginationObj: any = null;
@@ -71,7 +72,7 @@ export class MoviesService {
       }
       
       const sliceStart = startItemIndex % itemsPerPage;
-      const sliceEnd = sliceStart + limit;
+      const sliceEnd = sliceStart + safeLimit;
       const slicedItems = allItems.slice(sliceStart, sliceEnd);
       
       // Map item images to full absolute paths
@@ -82,7 +83,7 @@ export class MoviesService {
       }));
 
       const totalItems = lastPaginationObj?.totalItems || 1000;
-      const totalPages = Math.ceil(totalItems / limit);
+      const totalPages = Math.ceil(totalItems / safeLimit);
 
       return {
         status: 200,
@@ -91,8 +92,8 @@ export class MoviesService {
         pathImage: this.IMAGE_BASE_URL,
         pagination: {
           totalItems,
-          totalItemsPerPage: limit,
-          currentPage: page,
+          totalItemsPerPage: safeLimit,
+          currentPage: safePage,
           totalPages,
         },
       };
@@ -108,10 +109,12 @@ export class MoviesService {
 
   // 2. Search movies by keyword
   async searchMovies(keyword: string, page: number = 1, limit: number = 100) {
-    this.logger.log(`[MoviesService] Searching movies for keyword: "${keyword}", page: ${page}, limit: ${limit}`);
+    const safeLimit = Math.min(Math.max(1, limit), this.MAX_LIST_LIMIT);
+    const safePage = Math.max(1, page);
+    this.logger.log(`[MoviesService] Searching movies for keyword: "${keyword}", page: ${safePage}, limit: ${safeLimit}`);
     try {
       const encodedKeyword = encodeURIComponent(keyword);
-      const response = await fetch(`${this.BASE_API_URL}/v1/api/tim-kiem?keyword=${encodedKeyword}&page=${page}&limit=${limit}`);
+      const response = await fetch(`${this.BASE_API_URL}/v1/api/tim-kiem?keyword=${encodedKeyword}&page=${safePage}&limit=${safeLimit}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch search results: ${response.statusText}`);
       }

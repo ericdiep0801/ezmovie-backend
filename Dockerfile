@@ -27,8 +27,9 @@ COPY --from=builder /app/dist ./dist
 # Expose NestJS default port
 EXPOSE 3000
 
-# Set environment variable
-ENV NODE_ENV=production
+# Cap V8 heap (~450MB) để tránh process bị OS kill trước khi GC kịp hoạt động trên 512MB instance
+ENV NODE_ENV=production \
+    NODE_OPTIONS="--max-old-space-size=450"
 
 # Start production server
 CMD ["node", "dist/main"]

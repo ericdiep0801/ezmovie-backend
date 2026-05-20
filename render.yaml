@@ -1,0 +1,10 @@
+# Render Blueprint (tuỳ chọn) — chỉnh name / branch / DB env trong dashboard.
+# Docker deploy: đã có NODE_OPTIONS trong Dockerfile; không bắt buộc dùng file này.
+
+services:
+  - type: web
+    name: ezmovie-backend
+    runtime: node
+    rootDir: .
+    buildCommand: npm ci && npm run build
+    startCommand: NODE_ENV=production NODE_OPTIONS=--max-old-space-size=450 node dist/main
