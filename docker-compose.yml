@@ -41,8 +41,8 @@ services:
       - MAIL_PASS=${MAIL_PASS:-qhwynjupzqwjgpwd}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-262276831455-9ipepm6vngf6c4gf4u81fnh5o1qjgeee.apps.googleusercontent.com}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-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}
-      - GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
-      - FRONTEND_URL=http://localhost:4200
+      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL:-http://localhost:3000/auth/google/callback}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:4200}
     depends_on:
       - ezmovie-db
     networks:
