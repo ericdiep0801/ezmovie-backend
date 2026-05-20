@@ -37,15 +37,35 @@ export class CartoonService {
   private readonly seriesList: CartoonSeries[] = [
     {
       id: 'doraemon',
-      name: 'Doraemon - Tập Ngắn',
+      name: 'Doraemon - Tập Ngắn & The Movie',
       originalName: 'ドラえもん',
       coverUrl: 'https://phimimg.com/upload/vod/20250108-1/008f74495954be77b6495b44c98ce6b4.png',
-      description: 'Trọn bộ các tập phim ngắn lồng tiếng Việt siêu đáng yêu và đầy ắp những phép thuật nhiệm màu từ chiếc túi thần kỳ của chú mèo máy Doraemon và Nobita.',
-      tags: ['Tập Ngắn', 'Nobita', 'Bảo Bối', 'Lồng Tiếng HD', 'Premium HLS'],
+      description: 'Trọn bộ các tập phim ngắn và các phần phim chiếu rạp (The Movie) lồng tiếng Việt siêu đáng yêu và đầy ắp những phép thuật nhiệm màu từ chiếc túi thần kỳ của chú mèo máy Doraemon và Nobita.',
+      tags: ['Tập Ngắn', 'The Movie', 'Nobita', 'Bảo Bối', 'Lồng Tiếng HD', 'Premium HLS'],
       rating: 4.9,
-      episodesCount: '64 Tập Ngắn HD',
+      episodesCount: '80+ Tập HD & The Movie',
       category: 'Anime',
       ophimSlug: 'doraemon-tuyen-tap-moi-nhat',
+      ophimSlugs: [
+        'doraemon-tuyen-tap-moi-nhat',
+        'doraemon-doi-ban-than',
+        'doraemon-doi-ban-than-2',
+        'doraemon-nobita-va-nhung-hiep-si-khong-gian',
+        'doraemon-nobita-va-nhung-phap-su-gio-bi-an',
+        'doraemon-nobita-va-nhung-ban-khung-long-moi',
+        'doraemon-nobita-va-cuoc-chien-vu-tru-ti-hon',
+        'doraemon-nobita-va-vung-dat-ly-tuong-tren-bau-troi',
+        'doraemon-nobita-va-vien-bao-tang-bao-boi',
+        'doraemon-nobita-va-mat-trang-phieu-luu-ky',
+        'doraemon-nobita-va-ban-giao-huong-dia-cau',
+        'doraemon-nobita-va-binh-doan-nguoi-sat',
+        'doraemon-nobita-va-cuoc-dai-thuy-chien-o-xu-so-nguoi-ca',
+        'doraemon-nobita-va-chuyen-tham-hiem-nam-cuc-kachi-kochi',
+        'doraemon-nobita-va-cuoc-phieu-luu-vao-the-gioi-trong-tranh',
+        'doraemon-the-movie-nobita-and-the-green-giant-legend',
+        'doraemon-nobita-tham-hiem-vung-dat-moi',
+        'doraemon-the-movie-nobitas-new-great-adventure-into-the-underworld'
+      ],
     },
     {
       id: 'shin',
@@ -157,7 +177,9 @@ export class CartoonService {
         episodes = await this.fetchEpisodesFromOPhim(series.ophimSlug, series, false);
       }
 
-      return this.filterByKeyword(episodes, keyword);
+      // Deduplicate across multi-slug fetches then filter
+      const uniqueEpisodes = this.deduplicateEpisodes(episodes);
+      return this.filterByKeyword(uniqueEpisodes, keyword);
     } catch (error) {
       this.logger.error(`Failed to retrieve episodes for ${seriesId}`, error);
       return this.getMockEpisodes(seriesId);
@@ -191,6 +213,21 @@ export class CartoonService {
     if (!keyword || !keyword.trim()) return episodes;
     const cleanKw = keyword.toLowerCase().trim();
     return episodes.filter((ep) => ep.title.toLowerCase().includes(cleanKw));
+  }
+
+  /**
+   * Remove duplicate episodes by id. Keeps first occurrence (preserves source order).
+   */
+  private deduplicateEpisodes(episodes: CartoonEpisode[]): CartoonEpisode[] {
+    const seen = new Set<string>();
+    const unique: CartoonEpisode[] = [];
+    for (const ep of episodes) {
+      if (!seen.has(ep.id)) {
+        seen.add(ep.id);
+        unique.push(ep);
+      }
+    }
+    return unique;
   }
 
   /**
@@ -229,28 +266,44 @@ export class CartoonService {
         : series.name.split(' - ')[0];
 
     const episodesList: CartoonEpisode[] = [];
+    // Seen slugs for dedup across all servers
+    const seenSlugs = new Set<string>();
 
-    // Use first available server data
-    const server = data.episodes[0];
-    const serverData = server.server_data || [];
+    // Merge episodes from ALL servers (not just [0])
+    // Each server (Hà Nội, HCM, ...) may have a different subset of episodes
+    for (const server of data.episodes) {
+      const serverData: any[] = server.server_data || [];
+      for (let i = 0; i < serverData.length; i++) {
+        const ep = serverData[i];
+        const epSlug: string = ep.slug || `${server.server_name}-${i}`;
 
-    for (let i = 0; i < serverData.length; i++) {
-      const ep = serverData[i];
-      let episodeNum: string = ep.name || `${i + 1}`;
-      episodeNum = episodeNum.replace(/^Tập\s+/i, '').trim();
+        // Skip duplicate episode slugs already seen from other servers
+        if (seenSlugs.has(epSlug)) continue;
+        seenSlugs.add(epSlug);
 
-      episodesList.push({
-        id: `ophim-${slug}-${ep.slug || i}`,
-        title: `${seriesLabel} - Tập ${episodeNum}`,
-        slug: ep.slug,
-        thumbnailUrl: thumbUrl,
-        linkEmbed: ep.link_embed || '',
-        linkM3u8: ep.link_m3u8 || '',
-        duration: '24:00',
-        views: 'FHD Rõ Nét',
-        publishDate: 'Máy Chủ Phim',
-      });
+        let episodeNum: string = ep.name || `${i + 1}`;
+        episodeNum = episodeNum.replace(/^Tập\s+/i, '').trim();
+
+        episodesList.push({
+          id: `ophim-${slug}-${epSlug}`,
+          title: `${seriesLabel} - Tập ${episodeNum}`,
+          slug: epSlug,
+          thumbnailUrl: thumbUrl,
+          linkEmbed: ep.link_embed || '',
+          linkM3u8: ep.link_m3u8 || '',
+          duration: '21:00',
+          views: 'FHD Rõ Nét',
+          publishDate: server.server_name || 'Máy Chủ Phim',
+        });
+      }
     }
+
+    // Sort by episode number ascending
+    episodesList.sort((a, b) => {
+      const numA = parseInt(a.title.replace(/.*Tập\s*/i, ''), 10) || 0;
+      const numB = parseInt(b.title.replace(/.*Tập\s*/i, ''), 10) || 0;
+      return numA - numB;
+    });
 
     return episodesList;
   }
