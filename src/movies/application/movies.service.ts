@@ -654,4 +654,67 @@ export class MoviesService {
       this.logger.error(`[MoviesService] Error updating user tracking: ${error.message}`);
     }
   }
+
+  async downloadStream(url: string, name: string, res: any) {
+    try {
+      this.logger.log(`[MoviesService] Downloading stream from: ${url}`);
+      
+      // 1. Fetch initial m3u8
+      let m3u8Text = await (await fetch(url)).text();
+      
+      // If it contains another m3u8 (e.g. index.m3u8 points to mixed.m3u8)
+      let lines = m3u8Text.split('\n');
+      let targetM3u8Url = url;
+      
+      for (const line of lines) {
+        if (line.trim().endsWith('.m3u8')) {
+          targetM3u8Url = new URL(line.trim(), url).toString();
+          m3u8Text = await (await fetch(targetM3u8Url)).text();
+          lines = m3u8Text.split('\n');
+          break;
+        }
+      }
+      
+      // 2. Extract all .ts files
+      const tsUrls: string[] = [];
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#')) {
+          tsUrls.push(new URL(trimmed, targetM3u8Url).toString());
+        }
+      }
+      
+      if (tsUrls.length === 0) {
+        if (!res.headersSent) res.status(400).send('No video segments found');
+        return;
+      }
+      
+      // 3. Set headers for file download
+      const safeName = (name || 'movie').replace(/[^a-zA-Z0-9_-]/g, '_');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeName}.ts"`);
+      res.setHeader('Content-Type', 'video/mp2t');
+      
+      // 4. Stream each .ts file to the response
+      for (let i = 0; i < tsUrls.length; i++) {
+        const tsUrl = tsUrls[i];
+        try {
+          const tsResponse = await fetch(tsUrl);
+          const arrayBuffer = await tsResponse.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          res.write(buffer);
+        } catch(e) {
+          this.logger.error(`Failed to download segment ${i}: ${e.message}`);
+        }
+      }
+      
+      res.end();
+    } catch (error) {
+      this.logger.error(`[MoviesService] Error in downloadStream: ${error.message}`);
+      if (!res.headersSent) {
+        res.status(500).send('Failed to download stream');
+      } else {
+        res.end();
+      }
+    }
+  }
 }

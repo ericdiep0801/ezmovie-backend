@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Delete, Body, Query, Param, UseGuards, Request, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Query, Param, UseGuards, Request, ParseIntPipe, Res } from '@nestjs/common';
+import * as jwt from 'jsonwebtoken';
 import { MoviesService } from '../application/movies.service';
 import { AddFavoriteDto } from '../application/dto/add-favorite.dto';
 import { AddHistoryDto } from '../application/dto/add-history.dto';
@@ -17,6 +18,28 @@ export class MoviesController {
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 100;
     return this.moviesService.getMovies(pageNum, limitNum);
+  }
+
+  // Download M3U8 directly as a combined TS file stream
+  @Get('download-stream')
+  async downloadStream(
+    @Query('url') url: string, 
+    @Query('name') name: string, 
+    @Query('token') token: string,
+    @Res() res: any
+  ) {
+    try {
+      if (!token) {
+        return res.status(401).send('Unauthorized. Please login to download.');
+      }
+      const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'super-secret-key-123');
+      if (decoded.role !== 'vip') {
+        return res.status(403).send('Forbidden. Only VIP users can download movies.');
+      }
+    } catch (err) {
+      return res.status(401).send('Invalid token.');
+    }
+    return this.moviesService.downloadStream(url, name, res);
   }
 
   // 2. Search movies by keyword
