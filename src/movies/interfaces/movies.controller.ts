@@ -33,8 +33,8 @@ export class MoviesController {
         return res.status(401).send('Unauthorized. Please login to download.');
       }
       const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'super-secret-key-123');
-      if (decoded.role !== 'vip') {
-        return res.status(403).send('Forbidden. Only VIP users can download movies.');
+      if (decoded.role !== 'vip' && decoded.role !== 'admin') {
+        return res.status(403).send('Forbidden. Only VIP or Admin users can download movies.');
       }
     } catch (err) {
       return res.status(401).send('Invalid token.');

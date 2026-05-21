@@ -23,6 +23,7 @@ import { join } from 'path';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { ScheduleModule } from '@nestjs/schedule';
 import { KafkaHeartbeatService } from './common/services/kafka-heartbeat.service';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { KafkaHeartbeatService } from './common/services/kafka-heartbeat.service
     TvModule,
     MusicModule,
     CartoonModule,
+    AdminModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
