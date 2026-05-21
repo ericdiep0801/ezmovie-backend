@@ -46,9 +46,9 @@ import { KafkaHeartbeatService } from './common/services/kafka-heartbeat.service
         entities: [User, Favorite, WatchHistory, Comment, TvChannel, TvFavorite, TvHistory],
         synchronize: true,
         migrationsRun: true,
-        /** Giữ pool nhỏ để tiết kiệm RAM trên instance ~512MB (Render free/starter) */
+        /** Giữ pool nhỏ để tiết kiệm RAM trên instance ~512MB (Render free/starter) và chừa connection cho external tools */
         extra: {
-          connectionLimit: 5,
+          connectionLimit: 3,
         },
       }),
     }),
