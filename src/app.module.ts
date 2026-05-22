@@ -24,6 +24,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { ScheduleModule } from '@nestjs/schedule';
 import { KafkaHeartbeatService } from './common/services/kafka-heartbeat.service';
 import { AdminModule } from './admin/admin.module';
+import { AuditLog } from './admin/entities/audit-log.entity';
 
 @Module({
   imports: [
@@ -44,7 +45,7 @@ import { AdminModule } from './admin/admin.module';
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [User, Favorite, WatchHistory, Comment, TvChannel, TvFavorite, TvHistory],
+        entities: [User, Favorite, WatchHistory, Comment, TvChannel, TvFavorite, TvHistory, AuditLog],
         synchronize: true,
         migrationsRun: true,
         /** Giữ pool nhỏ để tiết kiệm RAM trên instance ~512MB (Render free/starter) và chừa connection cho external tools */

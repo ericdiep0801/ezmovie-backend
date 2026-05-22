@@ -11,6 +11,11 @@ import { UserRole } from '../users/domain/entities/user.entity';
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
+  @Get('dashboard-stats')
+  getDashboardStats() {
+    return this.adminService.getDashboardStats();
+  }
+
   @Get('tables')
   getTables() {
     return this.adminService.getTables();
@@ -19,16 +24,12 @@ export class AdminController {
   @Get('data/:table')
   getTableData(
     @Param('table') table: string,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('search') search?: string
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('filters') filters?: string,
   ) {
-    return this.adminService.getTableData(
-      table, 
-      page ? parseInt(page) : 1, 
-      limit ? parseInt(limit) : 20, 
-      search
-    );
+    return this.adminService.getTableData(table, page ? +page : 1, limit ? +limit : 20, search, filters);
   }
 
   @Post('data/:table')
@@ -44,5 +45,15 @@ export class AdminController {
   @Delete('data/:table/:id')
   deleteData(@Param('table') table: string, @Param('id') id: string) {
     return this.adminService.deleteData(table, id);
+  }
+
+  @Post('data/:table/batch-delete')
+  batchDelete(@Param('table') table: string, @Body('ids') ids: any[]) {
+    return this.adminService.batchDelete(table, ids);
+  }
+
+  @Post('data/:table/batch-insert')
+  batchInsert(@Param('table') table: string, @Body('data') data: any[]) {
+    return this.adminService.batchInsert(table, data);
   }
 }
