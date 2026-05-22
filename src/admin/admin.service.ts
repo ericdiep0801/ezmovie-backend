@@ -18,11 +18,43 @@ export class AdminService {
     }));
   }
 
-  async getTableData(tableName: string) {
+  async getTableData(tableName: string, page: number = 1, limit: number = 20, search?: string) {
     const metadata = this.dataSource.entityMetadatas.find(m => m.tableName === tableName);
     if (!metadata) throw new BadRequestException(`Table ${tableName} not found`);
 
-    return await this.dataSource.manager.find(metadata.target);
+    const repository = this.dataSource.getRepository(metadata.target);
+    const alias = 'entity';
+    const queryBuilder = repository.createQueryBuilder(alias);
+
+    if (search) {
+      const stringColumns = metadata.columns.filter(col => 
+        col.type === String || 
+        (typeof col.type === 'string' && ['varchar', 'text', 'char'].includes(col.type.toLowerCase()))
+      );
+      
+      if (stringColumns.length > 0) {
+        const whereClause = stringColumns.map(col => `${alias}.${col.propertyName} LIKE :search`).join(' OR ');
+        queryBuilder.where(`(${whereClause})`, { search: `%${search}%` });
+      } else if (!isNaN(Number(search)) && metadata.primaryColumns[0]) {
+        queryBuilder.where(`${alias}.${metadata.primaryColumns[0].propertyName} = :search`, { search: Number(search) });
+      }
+    }
+
+    const dateCol = metadata.columns.find(c => ['createdAt', 'created_at', 'create_time', 'createdDate'].includes(c.propertyName));
+    const primaryColumn = metadata.primaryColumns[0]?.propertyName;
+
+    if (dateCol) {
+        queryBuilder.orderBy(`${alias}.${dateCol.propertyName}`, 'DESC');
+    } else if (primaryColumn) {
+        queryBuilder.orderBy(`${alias}.${primaryColumn}`, 'DESC');
+    }
+
+    const [data, total] = await queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return { data, total, page, limit };
   }
 
   async insertData(tableName: string, data: any) {

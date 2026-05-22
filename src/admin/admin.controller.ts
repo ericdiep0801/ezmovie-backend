@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards, Query } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/infrastructure/guards/roles.guard';
@@ -17,8 +17,18 @@ export class AdminController {
   }
 
   @Get('data/:table')
-  getTableData(@Param('table') table: string) {
-    return this.adminService.getTableData(table);
+  getTableData(
+    @Param('table') table: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string
+  ) {
+    return this.adminService.getTableData(
+      table, 
+      page ? parseInt(page) : 1, 
+      limit ? parseInt(limit) : 20, 
+      search
+    );
   }
 
   @Post('data/:table')
