@@ -30,4 +30,8 @@ export class UsersService {
     const user = this.usersRepository.create(userData);
     return this.usersRepository.save(user);
   }
+
+  async updateLastActive(id: number): Promise<void> {
+    await this.usersRepository.update(id, { lastActiveAt: new Date() });
+  }
 }

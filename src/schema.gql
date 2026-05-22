@@ -244,6 +244,7 @@ type User {
   email: String!
   id: Int!
   isActive: Boolean!
+  lastActiveAt: DateTime
   lastDevice: String
   lastIp: String
   provider: String!

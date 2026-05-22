@@ -66,6 +66,10 @@ export class User {
   @Column({ default: false })
   isActive: boolean;
 
+  @Field(() => Date, { nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
+  lastActiveAt: Date | null;
+
   @Field(() => String, { nullable: true })
   @Column({ type: 'varchar', nullable: true })
   lastIp: string | null;
