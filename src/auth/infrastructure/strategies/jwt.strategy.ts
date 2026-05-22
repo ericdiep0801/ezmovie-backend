@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -20,12 +20,25 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    // Fire and forget activity update
-    if (payload.sub) {
-      this.userRepository.update(payload.sub, { lastActiveAt: new Date() }).catch(err => {
-        console.error('Failed to update lastActiveAt', err);
-      });
+    if (!payload.sub) {
+      throw new UnauthorizedException('Invalid token payload');
     }
-    return { userId: payload.sub, email: payload.email, role: payload.role };
+
+    const user = await this.userRepository.findOne({ where: { id: payload.sub } });
+    
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (user.isBlocked) {
+      throw new UnauthorizedException('Tài khoản của bạn đã bị khóa bởi Admin.');
+    }
+
+    // Fire and forget activity update
+    this.userRepository.update(user.id, { lastActiveAt: new Date() }).catch(err => {
+      console.error('Failed to update lastActiveAt', err);
+    });
+    
+    return { userId: user.id, email: user.email, role: user.role };
   }
 }

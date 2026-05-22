@@ -66,6 +66,10 @@ export class User {
   @Column({ default: false })
   isActive: boolean;
 
+  @Field()
+  @Column({ default: false })
+  isBlocked: boolean;
+
   @Field(() => Date, { nullable: true })
   @Column({ type: 'timestamp', nullable: true })
   lastActiveAt: Date | null;
