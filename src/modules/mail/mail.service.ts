@@ -133,9 +133,9 @@ export class MailService {
     try {
       // Dùng mail bất đồng bộ (không await) để không làm chậm luồng response cho User
       this.transporter.sendMail(mailOptions).then(() => {
-        this.logger.log(\`[MAIL] Admin notification sent successfully for user \${username}\`);
+        this.logger.log(`[MAIL] Admin notification sent successfully for user ${username}`);
       }).catch((error) => {
-        this.logger.error(\`[MAIL] Failed to send admin notification:\`, error);
+        this.logger.error(`[MAIL] Failed to send admin notification:`, error);
       });
       return true;
     } catch (error) {
