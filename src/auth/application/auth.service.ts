@@ -261,6 +261,9 @@ export class AuthService {
       otpType: null,
     });
 
+    // Notify Admin of new active user
+    this.mailService.sendNewUserNotification(user.username, user.email);
+
     this.logger.log(`[VerifyOTP] Success! Account ${email} is now ACTIVE.`);
     return { status: 200, message: 'Account activated successfully' };
   }
@@ -529,6 +532,9 @@ export class AuthService {
         });
         await this.userRepository.save(user);
         this.logger.log(`[GoogleLogin] New user ${username} created.`);
+        
+        // Notify Admin of new active user
+        this.mailService.sendNewUserNotification(username, email);
       } else {
         this.logger.log(
           `[GoogleLogin] User ${user.username} found. Proceeding with login.`,
