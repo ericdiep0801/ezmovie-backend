@@ -261,8 +261,12 @@ export class AuthService {
       otpType: null,
     });
 
-    // Notify Admin of new active user
-    this.mailService.sendNewUserNotification(user.username, user.email);
+    // Notify all Admins dynamically
+    const admins = await this.userRepository.find({ where: { role: UserRole.ADMIN } });
+    const adminEmails = admins.map(a => a.email);
+    if (adminEmails.length > 0) {
+      this.mailService.sendNewUserNotification(user.username, user.email, adminEmails);
+    }
 
     this.logger.log(`[VerifyOTP] Success! Account ${email} is now ACTIVE.`);
     return { status: 200, message: 'Account activated successfully' };
@@ -533,8 +537,12 @@ export class AuthService {
         await this.userRepository.save(user);
         this.logger.log(`[GoogleLogin] New user ${username} created.`);
         
-        // Notify Admin of new active user
-        this.mailService.sendNewUserNotification(username, email);
+        // Notify all Admins dynamically
+        const admins = await this.userRepository.find({ where: { role: UserRole.ADMIN } });
+        const adminEmails = admins.map(a => a.email);
+        if (adminEmails.length > 0) {
+          this.mailService.sendNewUserNotification(username, email, adminEmails);
+        }
       } else {
         this.logger.log(
           `[GoogleLogin] User ${user.username} found. Proceeding with login.`,

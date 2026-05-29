@@ -74,11 +74,12 @@ export class MailService {
     }
   }
 
-  async sendNewUserNotification(username: string, email: string) {
-    const adminEmail = this.configService.get<string>('ADMIN_EMAIL') || this.configService.get<string>('MAIL_USER');
+  async sendNewUserNotification(username: string, email: string, adminEmails: string[]) {
+    if (!adminEmails || adminEmails.length === 0) return false;
+    
     const mailOptions = {
       from: `"EZMOVIE System" <${this.configService.get<string>('MAIL_USER')}>`,
-      to: adminEmail,
+      to: adminEmails,
       subject: '🎉 Có thành viên mới gia nhập EZMOVIE',
       html: `
         <div style="background-color: #f0f2f5; padding: 40px 20px; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
