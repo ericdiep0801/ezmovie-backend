@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import { User } from '../users/domain/entities/user.entity';
 import { Favorite } from '../movies/domain/entities/favorite.entity';
 import { WatchHistory } from '../movies/domain/entities/history.entity';
+import { CartoonHistory } from '../cartoon/entities/cartoon-history.entity';
 import 'dotenv/config';
 
 export const AppDataSource = new DataSource({
@@ -13,7 +14,7 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_DATABASE || 'ezmovie',
   synchronize: false,
   logging: true,
-  entities: [User, Favorite, WatchHistory],
+  entities: [User, Favorite, WatchHistory, CartoonHistory],
   migrations: [__dirname + '/migrations/*.ts'],
   subscribers: [],
 });

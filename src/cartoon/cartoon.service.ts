@@ -1,4 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CartoonHistory } from './entities/cartoon-history.entity';
 
 export interface CartoonSeries {
   id: string;
@@ -32,6 +35,11 @@ export class CartoonService {
   private readonly logger = new Logger(CartoonService.name);
   private readonly BASE_API_URL = 'https://phimapi.com';
   private readonly IMAGE_BASE_URL = 'https://phimimg.com';
+
+  constructor(
+    @InjectRepository(CartoonHistory)
+    private readonly cartoonHistoryRepository: Repository<CartoonHistory>,
+  ) {}
 
   // Series List (Directly mapped to KKPhim high-speed HLS anime databases)
   private readonly seriesList: CartoonSeries[] = [
@@ -179,6 +187,10 @@ export class CartoonService {
 
       // Deduplicate across multi-slug fetches then filter
       const uniqueEpisodes = this.deduplicateEpisodes(episodes);
+      
+      // NguonC server is currently dead (sing.phimmoi.net), and Youtube is not preferred by user.
+      // Removed the special injected episode.
+
       return this.filterByKeyword(uniqueEpisodes, keyword);
     } catch (error) {
       this.logger.error(`Failed to retrieve episodes for ${seriesId}`, error);
@@ -331,6 +343,39 @@ export class CartoonService {
         views: 'HD Rõ Nét',
         publishDate: 'Máy Chủ Phim',
       };
+    });
+  }
+
+  async saveHistory(userId: number, seriesId: string, episodeId: string, progressPercent: number): Promise<CartoonHistory> {
+    let history = await this.cartoonHistoryRepository.findOne({
+      where: { userId, episodeId }
+    });
+
+    const isCompleted = progressPercent >= 95;
+
+    if (history) {
+      history.progressPercent = progressPercent;
+      if (isCompleted) {
+        history.isCompleted = true;
+      }
+      return this.cartoonHistoryRepository.save(history);
+    }
+
+    history = this.cartoonHistoryRepository.create({
+      userId,
+      seriesId,
+      episodeId,
+      progressPercent,
+      isCompleted,
+    });
+
+    return this.cartoonHistoryRepository.save(history);
+  }
+
+  async getSeriesHistory(userId: number, seriesId: string): Promise<CartoonHistory[]> {
+    return this.cartoonHistoryRepository.find({
+      where: { userId, seriesId },
+      order: { updatedAt: 'DESC' }
     });
   }
 }
