@@ -26,6 +26,7 @@ import { KafkaHeartbeatService } from './common/services/kafka-heartbeat.service
 import { AdminModule } from './admin/admin.module';
 import { AuditLog } from './admin/entities/audit-log.entity';
 import { CartoonHistory } from './cartoon/entities/cartoon-history.entity';
+import { LiveModule } from './live/live.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { CartoonHistory } from './cartoon/entities/cartoon-history.entity';
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       sortSchema: true,
     }),
+    LiveModule,
   ],
   controllers: [AppController],
   providers: [AppService, KafkaHeartbeatService],
