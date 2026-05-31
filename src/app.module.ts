@@ -27,6 +27,7 @@ import { AdminModule } from './admin/admin.module';
 import { AuditLog } from './admin/entities/audit-log.entity';
 import { CartoonHistory } from './cartoon/entities/cartoon-history.entity';
 import { LiveModule } from './live/live.module';
+import { AiModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { LiveModule } from './live/live.module';
       sortSchema: true,
     }),
     LiveModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService, KafkaHeartbeatService],
