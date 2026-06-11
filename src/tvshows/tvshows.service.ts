@@ -26,7 +26,7 @@ export class TvShowsService {
         name: 'Love Actually 5',
         type: 'Dating Reality Show',
         coverUrl: 'https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?q=80&w=600&auto=format&fit=crop',
-        previewUrl: 'https://vip.opstream14.com/share/246cdac40cb7c5852aba40f1f0ce01da', // Placeholder
+        previewUrl: 'https://vip.opstream16.com/share/7d54b4aa7cf58b91cfdeb51b235739b2', // Heart Signal 5
         description: 'Mùa thứ 5 của chương trình hẹn hò ăn khách nhất, mang đến những cung bậc cảm xúc chân thực và những câu chuyện tình yêu đầy bất ngờ.',
         popularity: 98000,
         episodes: 12,
