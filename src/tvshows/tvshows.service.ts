@@ -10,6 +10,7 @@ export interface TvShowDto {
   popularity: number;
   episodes: number;
   rating: string;
+  slug?: string;
 }
 
 @Injectable()
@@ -30,7 +31,8 @@ export class TvShowsService {
         description: 'Mùa thứ 5 của chương trình hẹn hò ăn khách nhất, mang đến những cung bậc cảm xúc chân thực và những câu chuyện tình yêu đầy bất ngờ.',
         popularity: 98000,
         episodes: 12,
-        rating: '16+'
+        rating: '16+',
+        slug: 'tin-hieu-con-tim-s5'
       },
       {
         id: 'tvshow-2',
@@ -41,7 +43,8 @@ export class TvShowsService {
         description: 'Những người trẻ độc thân, quyến rũ bị mắc kẹt trên một hòn đảo hoang vắng. Cách duy nhất để thoát khỏi đây là tìm được một nửa của mình.',
         popularity: 154000,
         episodes: 10,
-        rating: '16+'
+        rating: '16+',
+        slug: 'dia-nguc-doc-than'
       },
       {
         id: 'tvshow-3',
@@ -52,7 +55,8 @@ export class TvShowsService {
         description: 'Phiên bản Việt hóa của chương trình tạp kỹ huyền thoại Hàn Quốc. Những cuộc rượt đuổi xé bảng tên đầy kịch tính và hài hước.',
         popularity: 210000,
         episodes: 15,
-        rating: '13+'
+        rating: '13+',
+        slug: 'the-running-man'
       },
       {
         id: 'tvshow-4',
@@ -63,7 +67,8 @@ export class TvShowsService {
         description: 'Hành trình khám phá văn hóa, cảnh đẹp Việt Nam của 6 thành viên với những thử thách "dở khóc dở cười".',
         popularity: 305000,
         episodes: 20,
-        rating: 'All'
+        rating: 'All',
+        slug: 'hai-ngay-mot-dem'
       },
       {
         id: 'tvshow-5',
@@ -74,7 +79,8 @@ export class TvShowsService {
         description: 'Sự quy tụ của 33 "anh tài" nổi tiếng trong showbiz Việt để cùng nhau vượt qua các thử thách âm nhạc đỉnh cao.',
         popularity: 450000,
         episodes: 15,
-        rating: 'All'
+        rating: 'All',
+        slug: 'ty-ty-dap-gio-re-song-2'
       },
       {
         id: 'tvshow-6',
@@ -85,7 +91,8 @@ export class TvShowsService {
         description: 'Chương trình truyền hình thực tế về âm nhạc quy tụ 30 nữ nghệ sĩ nổi tiếng hoạt động trong ngành giải trí.',
         popularity: 420000,
         episodes: 15,
-        rating: 'All'
+        rating: 'All',
+        slug: 'ty-ty-dap-gio-re-song-mua-4'
       },
       {
         id: 'tvshow-7',
@@ -96,7 +103,8 @@ export class TvShowsService {
         description: 'Các nghệ sĩ trải nghiệm môi trường huấn luyện quân đội thực tế, rèn luyện ý chí và kỷ luật.',
         popularity: 180000,
         episodes: 14,
-        rating: 'All'
+        rating: 'All',
+        slug: 'hanh-trinh-cong-ly'
       },
       {
         id: 'tvshow-8',
@@ -107,7 +115,8 @@ export class TvShowsService {
         description: 'Cuộc thi tìm kiếm tài năng âm nhạc Rap số 1 tại Việt Nam, nơi bứt phá của những rapper trẻ.',
         popularity: 560000,
         episodes: 16,
-        rating: '13+'
+        rating: '13+',
+        slug: 'the-rap-of-china-2023'
       }
     ];
   }
