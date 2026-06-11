@@ -22,16 +22,21 @@ export class AiService {
 
     try {
       const model = this.genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         systemInstruction: "Bạn là trợ lý AI ảo của trang web xem phim EZMOVIE. Bạn đóng vai trò là một chuyên gia tư vấn phim thân thiện, am hiểu sâu rộng về điện ảnh. Hãy gọi người dùng là 'bạn' và xưng là 'mình'. Luôn gợi ý phim một cách nhiệt tình và đưa ra câu trả lời ngắn gọn, dễ đọc. Bạn chỉ nên trả lời các câu hỏi liên quan đến phim ảnh, diễn viên, đạo diễn, và hệ thống EZMOVIE. Nếu người dùng hỏi ngoài lề, hãy khéo léo từ chối và hướng họ về chủ đề phim ảnh.",
       });
 
       // Convert history format to Gemini format
       // Gemini expects: { role: 'user' | 'model', parts: [{ text: string }] }
-      const formattedHistory = history.map(msg => ({
+      let formattedHistory = history.map(msg => ({
         role: msg.role === 'user' ? 'user' : 'model',
         parts: [{ text: msg.content }],
       }));
+
+      // Gemini requires the first message in the history to be from the user.
+      while (formattedHistory.length > 0 && formattedHistory[0].role !== 'user') {
+        formattedHistory.shift();
+      }
 
       const chat = model.startChat({
         history: formattedHistory,
