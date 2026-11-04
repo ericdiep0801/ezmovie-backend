@@ -49,6 +49,11 @@ import { FootballModule } from './football/football.module';
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
+        ssl:
+          configService.get('DB_SSL') === 'true' ||
+          configService.get<string>('DB_HOST')?.includes('aivencloud.com')
+            ? { rejectUnauthorized: false }
+            : undefined,
         entities: [User, Favorite, WatchHistory, Comment, TvChannel, TvFavorite, TvHistory, AuditLog, CartoonHistory],
         synchronize: true,
         migrationsRun: true,
