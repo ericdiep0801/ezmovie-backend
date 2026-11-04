@@ -11,8 +11,8 @@ import { AddHistoryDto } from './dto/add-history.dto';
 @Injectable()
 export class MoviesService {
   private readonly logger = new Logger(MoviesService.name);
-  private readonly BASE_API_URL = 'https://ophim1.com';
-  private readonly IMAGE_BASE_URL = 'https://img.ophim.live/uploads/movies';
+  private readonly BASE_API_URL = process.env.MOVIE_API_URL || 'https://phimapi.com';
+  private readonly IMAGE_BASE_URL = process.env.MOVIE_IMAGE_URL || 'https://phimimg.com';
   private readonly MAX_WATCH_HISTORY = 30;
   /** Tránh payload quá lớn / spike RAM khi có nhiều request song song */
   private readonly MAX_LIST_LIMIT = 100;
@@ -31,9 +31,14 @@ export class MoviesService {
   private resolveImageUrl(path: string): string {
     if (!path) return '';
     if (path.startsWith('http://') || path.startsWith('https://')) {
+      // Tự động chuyển đổi các domain ảnh Ophim cũ đã bị chết sang CDN phimimg mới
+      if (path.includes('img.ophim.live/uploads/movies/')) {
+        return path.replace('https://img.ophim.live/uploads/movies/', `${this.IMAGE_BASE_URL}/uploads/movies/`);
+      }
       return path;
     }
-    return `${this.IMAGE_BASE_URL}/${path}`;
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    return `${this.IMAGE_BASE_URL}/${cleanPath}`;
   }
 
   // 1. Get all movies (newly updated movies from public server)
@@ -52,7 +57,10 @@ export class MoviesService {
       const results: any[] = [];
       for (let p = startPageNum; p <= endPageNum; p++) {
         try {
-          const res = await fetch(`${this.BASE_API_URL}/danh-sach/phim-moi-cap-nhat?page=${p}`);
+          const res = await fetch(`${this.BASE_API_URL}/danh-sach/phim-moi-cap-nhat?page=${p}`, {
+            signal: AbortSignal.timeout(10000),
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; EZMovie/2.0)' },
+          });
           if (!res.ok) {
             throw new Error(`Status ${res.status}`);
           }
@@ -117,13 +125,19 @@ export class MoviesService {
     this.logger.log(`[MoviesService] Searching movies for keyword: "${keyword}", page: ${safePage}, limit: ${safeLimit}`);
     try {
       const encodedKeyword = encodeURIComponent(keyword);
-      const response = await fetch(`${this.BASE_API_URL}/v1/api/tim-kiem?keyword=${encodedKeyword}&page=${safePage}&limit=${safeLimit}`);
+      const response = await fetch(
+        `${this.BASE_API_URL}/v1/api/tim-kiem?keyword=${encodedKeyword}&page=${safePage}&limit=${safeLimit}`,
+        {
+          signal: AbortSignal.timeout(10000),
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; EZMovie/2.0)' },
+        },
+      );
       if (!response.ok) {
         throw new Error(`Failed to fetch search results: ${response.statusText}`);
       }
       const rawData = await response.json();
       
-      if (rawData.status !== 'success') {
+      if (rawData.status !== 'success' && rawData.status !== true) {
         return {
           status: 400,
           message: 'Failed to search movies from server',
@@ -137,12 +151,19 @@ export class MoviesService {
         poster_url: this.resolveImageUrl(item.poster_url),
       }));
 
+      const pagination = rawData.data?.params?.pagination || rawData.data?.pagination || {
+        totalItems: items.length,
+        totalItemsPerPage: safeLimit,
+        currentPage: safePage,
+        totalPages: 1,
+      };
+
       return {
         status: 200,
         message: 'Search movies successfully',
         items,
         pathImage: this.IMAGE_BASE_URL,
-        pagination: rawData.data?.pagination,
+        pagination,
       };
     } catch (error) {
       this.logger.error(`[MoviesService] Error in searchMovies: ${error.message}`);
@@ -158,13 +179,16 @@ export class MoviesService {
   async getMovieDetails(slug: string) {
     this.logger.log(`[MoviesService] Fetching movie details for slug: "${slug}"`);
     try {
-      const response = await fetch(`${this.BASE_API_URL}/phim/${slug}`);
+      const response = await fetch(`${this.BASE_API_URL}/phim/${slug}`, {
+        signal: AbortSignal.timeout(10000),
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; EZMovie/2.0)' },
+      });
       if (!response.ok) {
         throw new Error(`Failed to fetch movie detail: ${response.statusText}`);
       }
       const data = await response.json();
 
-      if (!data.status) {
+      if (!data || (data.status !== true && data.status !== 'success' && !data.movie)) {
         return {
           status: 404,
           message: `Movie with slug "${slug}" not found`,

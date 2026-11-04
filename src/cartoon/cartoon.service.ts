@@ -33,8 +33,8 @@ export interface CartoonEpisode {
 @Injectable()
 export class CartoonService {
   private readonly logger = new Logger(CartoonService.name);
-  private readonly BASE_API_URL = 'https://phimapi.com';
-  private readonly IMAGE_BASE_URL = 'https://phimimg.com';
+  private readonly BASE_API_URL = process.env.MOVIE_API_URL || 'https://phimapi.com';
+  private readonly IMAGE_BASE_URL = process.env.MOVIE_IMAGE_URL || 'https://phimimg.com';
 
   constructor(
     @InjectRepository(CartoonHistory)

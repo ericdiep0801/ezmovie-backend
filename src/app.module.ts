@@ -28,7 +28,7 @@ import { AuditLog } from './admin/entities/audit-log.entity';
 import { CartoonHistory } from './cartoon/entities/cartoon-history.entity';
 import { LiveModule } from './live/live.module';
 import { AiModule } from './modules/ai/ai.module';
-import { TvShowsModule } from './tvshows/tvshows.module';
+import { FootballModule } from './football/football.module';
 
 @Module({
   imports: [
@@ -72,7 +72,7 @@ import { TvShowsModule } from './tvshows/tvshows.module';
     }),
     LiveModule,
     AiModule,
-    TvShowsModule,
+    FootballModule,
   ],
   controllers: [AppController],
   providers: [AppService, KafkaHeartbeatService],
